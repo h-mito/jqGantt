@@ -5,10 +5,9 @@ JqGantt::Application.routes.draw do
   match '/about',     to: "static_pages#about", via: 'get'
 
 
-  get "prototypes/test1"
-  get "prototypes/test2"
-  get "prototypes/test3"
-
+  get "prototype1s/test"
+  get "prototype2s/test"
+  
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
