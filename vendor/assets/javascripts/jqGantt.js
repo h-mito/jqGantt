@@ -384,7 +384,10 @@ var ganttTask = function(options){
             groups: [],
             maxGid: 0,
             maxPid: 0,
-            maxTid: 0
+            maxTid: 0,
+            evGroupChanged: null,
+            evProjectChanged: null,
+            evTaskChanged: null
         };
         var settings = $.extend(defaults, options);
  
@@ -411,6 +414,10 @@ var ganttTask = function(options){
                 }
             }
 
+        };
+
+        var getGroups = function(){
+            return settings.groups;
         };
 
         var getGroup = function(gid){
@@ -632,6 +639,39 @@ var ganttTask = function(options){
 
                     
                     $divPrj.on("dragstop", function(event , ui){
+                        
+                        var ret = calcDateFromLeft(ui.position.left);
+                        var tag = $(this).data("tag");
+                        var preDt = tag.getStartDate();
+                        var id = tag.getId();
+                        
+                        tag.setStartDate(ret);
+
+                        $("#ganttProjectSet-" + id).css("left", ui.position.left);
+
+                        for (var tc = 0; tc < tag.getTasks().length; tc++){
+                            var wkTask = tag.getTasks()[tc];
+                            var wkT = wkTask.getStartDate().getTime();
+                            var sa = ret - preDt.getTime();
+
+                            var wkD = wkTask.getStartDate();
+                            wkD.setTime(wkD.getTime() + sa);
+                            wkTask.setStartDate(wkD);
+                        }
+
+
+                        var info = getProjInfo(tag.getParent());
+
+                        $divGrp = $("#ganttGroup-" + tag.getParent().getId());
+
+                        var lt = calcDateLeft(info[0]);
+                        $divGrp.css("left", lt + "px");
+                        $divGrp.css("width", GANTT_DAY_WIDTH * info[1] + "px");
+
+                        //event
+                        if (settings.evProjectChanged != null){
+                            settings.evProjectChanged(tag);
+                        }
 
                     });
                     
@@ -657,6 +697,11 @@ var ganttTask = function(options){
                             $("#ganttTask-" + wkTask.getId())
                                 .resizable("option", "maxWidth", calcMaxWidth(tag, wkTask));
 
+                        }
+
+                        //event
+                        if (settings.evProjectChanged != null){
+                            settings.evProjectChanged(tag);
                         }
                     });
                     
@@ -728,12 +773,44 @@ var ganttTask = function(options){
                             });
 
 
+                        $divTask.on("dragstop", function(event , ui){
+                            
+                            
+                            var tag = $(this).data("tag");
+                            var ptPrj = tag.getParent();
+
+                            var wkT = ptPrj.getStartDate().getTime() + (ui.position.left / GANTT_DAY_WIDTH) * GANTT_DAY_MILSEC;
+                            
+                            var wkDt = new Date();
+                            wkDt.setTime(wkT);
+
+                            tag.setStartDate(wkDt);
+
+
+                            $("#ganttProject-" + ptPrj.getId()).resizable("option", "minWidth" ,calcMinWidthPrj(ptPrj));
+
+                            //event
+                            if (settings.evTaskChanged != null){
+                                settings.evTaskChanged(tag);
+                            }
+
+                        });
+
                         $divTask.on("resizestop", function(e, ui){
                             var wid = Math.round(ui.size.width / GANTT_DAY_WIDTH) * GANTT_DAY_WIDTH;
                             $(this).css("width", wid);
 
                             var tag = $(this).data("tag");
                             tag.setDays(wid / GANTT_DAY_WIDTH);
+
+                            var ptPrj = tag.getParent();
+
+                            $("#ganttProject-" + ptPrj.getId()).resizable("option", "minWidth" ,calcMinWidthPrj(ptPrj));
+
+                            //event
+                            if (settings.evTaskChanged != null){
+                                settings.evTaskChanged(tag);
+                            }
                         });
 
                         $divTask.data("tag", task);
@@ -770,7 +847,7 @@ var ganttTask = function(options){
             var stt = settings.startDate.getTime() ;
             var rvt = rcvDt.getTime();
 
-            var sa = (rvt - stt) / (GANTT_DAY_MILSEC);
+            var sa = (rvt - stt) / GANTT_DAY_MILSEC;
             sa = sa + GANTT_BACK_DAYS;
 
             return sa * GANTT_DAY_WIDTH ;
@@ -780,10 +857,23 @@ var ganttTask = function(options){
             var ptt = rcvParentDt.getTime();
             var rvt = rcvDt.getTime();
 
-            var sa = (rvt - ptt) / (GANTT_DAY_MILSEC);
+            var sa = (rvt - ptt) / GANTT_DAY_MILSEC;
 
             return sa * GANTT_DAY_WIDTH ;
         }
+
+
+        function calcDateFromLeft(rcvLeft){
+
+            var sa = rcvLeft / GANTT_DAY_WIDTH;
+            sa = sa - GANTT_BACK_DAYS;
+            var wk = settings.startDate.getTime() + sa * GANTT_DAY_MILSEC
+            var rtnDt = new Date();
+            rtnDt.setTime(wk);
+
+            return rtnDt;
+        }
+
 
         function calcMaxWidth(rcvP, rcvT){
 
@@ -1036,6 +1126,9 @@ var ganttTask = function(options){
         var globals = {
             hello: function(name){
                 return hello(name);
+            },
+            getGroups: function(){
+                return getGroups();
             },
             addGroup: function(name){
                 return addGroup(name);
