@@ -108,6 +108,8 @@ var ganttProject = function(options){
     var defaults = {
         id: -1 ,
         groupId: -1 ,
+        parent: null,
+        percent: 0,
         name: "",
         startDate: new Date(),
         days: 1,
@@ -131,6 +133,22 @@ var ganttProject = function(options){
 
     var setGroupId = function(gid){
         settings.groupId = gid;
+    }
+
+    var getParent = function(){
+        return settings.parent;
+    }
+
+    var setParent = function(grp){
+        settings.parent = grp;
+    }
+
+    var getPercent = function(){
+        return settings.percent;
+    }
+
+    var setPercent = function(per){
+        settings.percent = per;
     }
 
     var getName = function(){
@@ -194,23 +212,35 @@ var ganttProject = function(options){
         setGroupId : function(gid){
             setGroupId(gid);
         },
+        getParent : function(){
+            return getParent();
+        },
+        setParent : function(pt){
+            setParent(pt);
+        },
+        getPercent : function(){
+            return getPercent();
+        },
+        setPercent : function(per){
+            setPercent(per);
+        },
         getName : function(){
             return getName();
         },
         setName : function(name){
-            return setName(name);
+            setName(name);
         },
         getStartDate : function(){
             return getStartDate();
         },
         setStartDate : function(date){
-            return setStartDate(date);
+            setStartDate(date);
         },
         getDays : function(){
             return getDays();
         },
         setDays : function(days){
-            return setDays(days);
+            setDays(days);
         },                        
         addTask : function(task){
             addTask(task);
@@ -260,6 +290,14 @@ var ganttTask = function(options){
         settings.projectId = pid;
     }
 
+    var getParent = function(){
+        return settings.parent;
+    }
+
+    var setParent = function(prj){
+        settings.parent = prj;
+    }
+
     var getName = function(){
         return settings.name;
     }
@@ -299,23 +337,35 @@ var ganttTask = function(options){
         setProjectId : function(gid){
             setProjectId(gid);
         },
+        getParent : function(){
+            return getParent();
+        },
+        setParent : function(prj){
+            setParent(prj);
+        },
+        getPercent : function(){
+            return getPercent();
+        },
+        setPercent : function(per){
+            setPercent(per);
+        },
         getName : function(){
             return getName();
         },
         setName : function(name){
-            return setName(name);
+             setName(name);
         },
         getStartDate : function(){
             return getStartDate();
         },
         setStartDate : function(date){
-            return setStartDate(date);
+            setStartDate(date);
         },
         getDays : function(){
             return getDays();
         },
         setDays : function(days){
-            return setDays(days);
+             setDays(days);
         },                        
 
     }
@@ -325,10 +375,7 @@ var ganttTask = function(options){
 }
 
 
-
-
-
-    $.fn.jqGantt = function(options){
+    jQuery.fn.jqGantt = function(options){
         var target  = this;
 
         var defaults = {
@@ -344,7 +391,7 @@ var ganttTask = function(options){
 
         var hello = function(name){
             alert ("hello " + name + " startDate=" + settings.startDate);
-        }
+        };
 
         var addGroup = function(name){
             var gid = settings.maxGid + 1;
@@ -354,7 +401,7 @@ var ganttTask = function(options){
             settings.groups.push(grp);
 
             return grp;
-        }
+        };
 
         var removeGroup = function(gid){
             for (var i = 0 ; i < settings.groups.length ; i++){
@@ -364,7 +411,7 @@ var ganttTask = function(options){
                 }
             }
 
-        }
+        };
 
         var getGroup = function(gid){
             for (var i = 0 ; i < settings.groups.length ; i++){
@@ -373,7 +420,7 @@ var ganttTask = function(options){
                 }
             }
             return null;
-        }
+        };
 
         var addProject = function(gid, name, startDate, days){
             var pid = settings.maxPid + 1;
@@ -385,21 +432,23 @@ var ganttTask = function(options){
 
             grp.addProject(prj);
 
+            prj.setParent(grp);
+
             return prj;
-        }
+        };
 
         var removeProject = function(gid, pid){
             var grp = getGroup(gid);
 
             grp.removeProject(pid);
-        }
+        };
 
         var getProject = function(gid, pid){
             var grp = getGroup(gid);
 
             return grp.getProject(pid);
 
-        }
+        };
 
         var getProject2 = function(pid){
 
@@ -414,7 +463,7 @@ var ganttTask = function(options){
             }
 
             return null;
-        }
+        };
 
         function getProjInfo(grp){
             var rtn = [];
@@ -454,21 +503,23 @@ var ganttTask = function(options){
 
             prj.addTask(task);
 
+            task.setParent(prj);
+
             return task;
-        }
+        };
 
         var removeTask = function(pid, tid){
             var prj = getProject2(pid);
 
             prj.removeTask(tid);
-        }
+        };
 
         var getTask = function(pid, tid){
             var prj = getProject2(pid);
 
             return prj.getTask(tid);
 
-        }
+        };
 
 
 
@@ -478,6 +529,7 @@ var ganttTask = function(options){
             }
             for (var i = 1; i <= settings.maxPid; i++){
                 $("ganttProject-" + i).remove();
+                $("ganttProjectSet-" + i).remove();
             }
             for (var i = 1; i <= settings.maxTid; i++){
                 $("ganttTask-" + i).remove();
@@ -532,6 +584,9 @@ var ganttTask = function(options){
 
 
                 $("#ganttMain").append($divGrp);
+
+                $divGrp.data("tag", grp);
+
                 wkTop += 24;
 
 
@@ -573,17 +628,63 @@ var ganttTask = function(options){
 
                     $("#ganttMain").append($divPrj);
                     $divPrj.draggable({addClasses:false, axis: "x", containment:"#ganttMain", grid: [GANTT_DAY_WIDTH,24] })
-                            .resizable({alsoResize: "#mirror" ,maxHeight: 16, minHeight: 16, minWidth: GANTT_DAY_WIDTH,
-                                stop: function(e, ui){
-                                    var wid = Math.round(ui.size.width / GANTT_DAY_WIDTH) * GANTT_DAY_WIDTH;
-                                    $(this).css("width", wid);
-                                }
-                            });
+                            .resizable({alsoResize: "#mirror", handles: "e" ,maxHeight: 16, minHeight: 16, minWidth: GANTT_DAY_WIDTH});
+
+                    
+                    $divPrj.on("dragstop", function(event , ui){
+
+                    });
+                    
+
+                    $divPrj.resizable("option", "minWidth" ,calcMinWidthPrj(prj));
+
+
+                    $divPrj.on("resizestop", function(event , ui){
+                        var wid = Math.round(ui.size.width / GANTT_DAY_WIDTH) * GANTT_DAY_WIDTH;
+                        $(this).css("width", wid);
+
+                        var tag = $(this).data("tag");
+                        tag.setDays(wid / GANTT_DAY_WIDTH);
+                        var id = tag.getId();
+
+                        $("#ganttProjectSet-" + id).css("width", wid);
+                        tag.setDays(wid / GANTT_DAY_WIDTH);
+
+
+
+                        for (var tc = 0 ; tc < tag.getTasks().length ; tc++){
+                            var wkTask = tag.getTasks()[tc]
+                            $("#ganttTask-" + wkTask.getId())
+                                .resizable("option", "maxWidth", calcMaxWidth(tag, wkTask));
+
+                        }
+                    });
+                    
+
+
+                    $divPrj.data("tag", prj)
 
                     wkTop += 24;
 
 
+
+                    $divPrjSet = $("<div />");
+                    $divPrjSet.attr("id","ganttProjectSet-" + prj.getId());
+                    $divPrjSet.css("position", "absolute");
+
+                    var lt = calcDateLeft(prj.getStartDate());
+                    $divPrjSet.css("left", lt + "px");
+                    $divPrjSet.css("top", wkTop + "px");
+                    $divPrjSet.css("width", GANTT_DAY_WIDTH * prj.getDays() + "px");
+                    $divPrjSet.css("height", prj.getTasks().length * 24 + "px" );
+                    //$divPrjSet.css("border", "1px solid #deaa78");
+
+                    $("#ganttMain").append($divPrjSet);
+
+
+
                     //=== Task
+                    var wktaskTop = 0;
                     for (var k = 0 ; k < prj.getTasks().length; k++){
                         var task = prj.getTasks()[k];
 
@@ -591,9 +692,9 @@ var ganttTask = function(options){
                         $divTask.attr("id","ganttTask-" + task.getId());
                         $divTask.css("position", "absolute");
 
-                        var lt = calcDateLeft(task.getStartDate());
+                        var lt = calcDateLeft2(prj.getStartDate(), task.getStartDate());
                         $divTask.css("left", lt + "px");
-                        $divTask.css("top", (wkTop + 4) + "px");
+                        $divTask.css("top", (wktaskTop + 4) + "px");
                         $divTask.css("width", GANTT_DAY_WIDTH * task.getDays() + "px");
                         $divTask.css("height", "16px" );
                         $divTask.css("border", "1px solid #deaa78");
@@ -618,16 +719,37 @@ var ganttTask = function(options){
 
                         $divTask.append($div2);
 
+                        $divPrjSet.append($divTask);
 
-                        $("#ganttMain").append($divTask);
+
+                        $divTask.draggable({addClasses:false, axis: "x", containment:"#ganttProjectSet-" + prj.getId(),  grid: [GANTT_DAY_WIDTH,24] })
+                            .resizable({alsoResize: "#mirror" ,handles: "e", maxHeight: 16, minHeight: 16, minWidth: GANTT_DAY_WIDTH
+                                , maxWidth: calcMaxWidth(prj, task)
+                            });
+
+
+                        $divTask.on("resizestop", function(e, ui){
+                            var wid = Math.round(ui.size.width / GANTT_DAY_WIDTH) * GANTT_DAY_WIDTH;
+                            $(this).css("width", wid);
+
+                            var tag = $(this).data("tag");
+                            tag.setDays(wid / GANTT_DAY_WIDTH);
+                        });
+
+                        $divTask.data("tag", task);
+
+
+                        wktaskTop += 24
                         wkTop += 24;
                     }
 
                 }
-
-
             }
-        }
+
+
+            $("#ganttMain").css("height", wkTop);
+
+        };
 
 
         function calcDate(rcvDt, rcvMonth){
@@ -653,6 +775,51 @@ var ganttTask = function(options){
 
             return sa * GANTT_DAY_WIDTH ;
         }
+
+        function calcDateLeft2(rcvParentDt, rcvDt){
+            var ptt = rcvParentDt.getTime();
+            var rvt = rcvDt.getTime();
+
+            var sa = (rvt - ptt) / (GANTT_DAY_MILSEC);
+
+            return sa * GANTT_DAY_WIDTH ;
+        }
+
+        function calcMaxWidth(rcvP, rcvT){
+
+            var ptt = rcvP.getStartDate().getTime();
+            var rvt = rcvT.getStartDate().getTime();
+            var days = rcvP.getDays();
+
+            var sa = (rvt - ptt) / (GANTT_DAY_MILSEC);
+
+
+            return (days - sa) * GANTT_DAY_WIDTH ;
+        }
+
+
+        function calcMinWidthPrj(rcvP){
+            var minD = null , maxT = null;
+
+
+            for (var i = 0 ; i < rcvP.getTasks().length ; i++){
+                var task = rcvP.getTasks()[i];
+                
+                if (minD == null || minD > task.getStartDate()){
+                    minD = task.getStartDate();
+                }
+
+                var wkT = task.getStartDate().getTime() + task.getDays() * GANTT_DAY_MILSEC;
+                if (maxT == null || maxT < wkT){
+                    maxT = wkT;
+                }
+            }
+
+            var sa = (maxT - minD.getTime()) / GANTT_DAY_MILSEC;
+
+            return  sa * GANTT_DAY_WIDTH ;
+        }
+
 
         function calcSpan(rcvDt1, rcvDt2){
             var wk1 = rcvDt1.getTime();
@@ -846,7 +1013,7 @@ var ganttTask = function(options){
                 $gmain.css("height", "200px");
                 $gmain.css("background-image", "url('/images/week.png')");
                 $gmain.css("background-repeat", "repeat");
-                $gmain.css("background-posiion", "-48px 0px");
+                $gmain.css("background-position", "-48px 0px");
 
 
                 $(elem).append($gmain);
@@ -906,12 +1073,9 @@ var ganttTask = function(options){
 
 
 
-        }
+        };
 
         return globals;
     };
-
-
-
 
 
