@@ -2,13 +2,26 @@ var gantt;
 var grpMain, grpSub1, grpSub2;
 
 
+
 $(function(){
-	gantt = $("#ganttDiv").jqGantt({startDate: new Date(2014,8-1, 1), months: 3,
-		evProjectChanged: function(tag){
-			//alert("Project Changed / ID= " + tag.getId() + " StartDate=" + tag.getStartDate());
+
+	if (location.href.indexOf("prototype2s/test") < 0){
+		return;
+	}
+
+
+	gantt = $("#ganttDiv").jqGantt({startDate: new Date(2014,8-1, 1), months: 2,
+		evProjectChanged: function(ctltag){
+			//alert("Project Changed / ID= " + ctltag.getId() + " StartDate=" + ctltag.getStartDate());
 		},
-		evTaskChanged: function(tag){
-			//alert("Task Changed / ID= " + tag.getId() + " StartDate=" + tag.getStartDate());
+		evTaskChanged: function(ctltag){
+			//alert("Task Changed / ID= " + ctltag.getId() + " StartDate=" + ctltag.getStartDate());
+		},
+		evProjectClick: function(ctltag){
+			//alert("Project + id=" + ctltag.getId() + " / name = " + ctltag.getName());
+		},
+		evTaskClick: function(ctltag){
+			//alert("Task + id=" + ctltag.getId() + " / name = " + ctltag.getName());
 		}
 	});
 	//$("#ganttDiv").jqGantt({startDate: new Date(2014,8-1, 5), months: 3});

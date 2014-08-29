@@ -1,4 +1,12 @@
+
+
 $(function(){
+
+	if (location.href.indexOf("prototype1s/test") < 0){
+		return;
+	}
+
+
 	$("#project-1")
 		.draggable({addClasses:false, axis: "x", containment:"#ganttMain", grid: [24,24] })
 		.resizable({alsoResize: "#mirror" ,maxHeight: 16, minHeight: 16, minWidth: 24,

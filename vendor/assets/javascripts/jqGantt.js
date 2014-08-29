@@ -29,6 +29,7 @@ var ganttGroup = function(options){
     var defaults = {
         id: -1,
         name: "",
+        tag: null,
         projects: []
     };
     var settings = $.extend(defaults, options);
@@ -48,6 +49,15 @@ var ganttGroup = function(options){
     var setName = function(name){
         settings.name = name;
     }
+
+    var getTag = function(){
+        return settings.tag;
+    }
+
+    var setTag = function(tag){
+        settings.tag = tag;
+    }
+
 
     var addProject = function(prj){
         settings.projects.push(prj);
@@ -85,6 +95,12 @@ var ganttGroup = function(options){
         setName : function(name){
             return setName(name);
         },
+        getTag : function(){
+            return getTag();
+        },
+        setTag : function(tag){
+            setTag(tag);
+        },                        
         addProject : function(prj){
             addProject(prj);
         },
@@ -113,6 +129,7 @@ var ganttProject = function(options){
         name: "",
         startDate: new Date(),
         days: 1,
+        tag: null,
         tasks: []
     };
 
@@ -175,6 +192,13 @@ var ganttProject = function(options){
         settings.days = days;
     }
 
+    var getTag = function(){
+        return settings.tag;
+    }
+
+    var setTag = function(tag){
+        settings.tag = tag;
+    }
 
     var addTask = function(task){
         settings.tasks.push(task);
@@ -242,6 +266,12 @@ var ganttProject = function(options){
         setDays : function(days){
             setDays(days);
         },                        
+        getTag : function(){
+            return getTag();
+        },
+        setTag : function(tag){
+            setTag(tag);
+        },                        
         addTask : function(task){
             addTask(task);
         },
@@ -268,7 +298,8 @@ var ganttTask = function(options){
         projectId: -1 ,
         name: "",
         startDate: new Date(),
-        days: 1
+        days: 1,
+        tag: null
     };
 
 
@@ -322,6 +353,13 @@ var ganttTask = function(options){
         settings.days = days;
     }
 
+    var getTag = function(){
+        return settings.tag;
+    }
+
+    var setTag = function(tag){
+        settings.tag = tag;
+    }
 
 
     var globals = {
@@ -367,6 +405,12 @@ var ganttTask = function(options){
         setDays : function(days){
              setDays(days);
         },                        
+        getTag : function(){
+            return getTag();
+        },
+        setTag : function(tag){
+             setTag(tag);
+        },                        
 
     }
 
@@ -387,7 +431,11 @@ var ganttTask = function(options){
             maxTid: 0,
             evGroupChanged: null,
             evProjectChanged: null,
-            evTaskChanged: null
+            evTaskChanged: null,
+            evGroupClick: null,
+            evProjectClick: null,
+            evTaskClick: null
+
         };
         var settings = $.extend(defaults, options);
  
@@ -396,11 +444,11 @@ var ganttTask = function(options){
             alert ("hello " + name + " startDate=" + settings.startDate);
         };
 
-        var addGroup = function(name){
+        var addGroup = function(name, tag){
             var gid = settings.maxGid + 1;
             settings.maxGid += 1;
 
-            var grp = ganttGroup({id: gid, name: name} );
+            var grp = ganttGroup({id: gid, name: name, tag: tag} );
             settings.groups.push(grp);
 
             return grp;
@@ -429,11 +477,11 @@ var ganttTask = function(options){
             return null;
         };
 
-        var addProject = function(gid, name, startDate, days){
+        var addProject = function(gid, name, startDate, days, tag){
             var pid = settings.maxPid + 1;
             settings.maxPid += 1;
 
-            var prj = ganttProject({groupId: gid, id: pid, name: name, startDate: startDate, days: days});
+            var prj = ganttProject({groupId: gid, id: pid, name: name, startDate: startDate, days: days, tag: tag});
             
             var grp = getGroup(gid);
 
@@ -500,11 +548,11 @@ var ganttTask = function(options){
         }
 
 
-        var addTask = function(pid, name, startDate, days){
+        var addTask = function(pid, name, startDate, days, tag){
             var tid = settings.maxTid + 1;
             settings.maxTid += 1;
 
-            var task = ganttTask({projectId: pid, id: tid, name: name, startDate: startDate, days: days});
+            var task = ganttTask({projectId: pid, id: tid, name: name, startDate: startDate, days: days, tag: tag});
             
             var prj = getProject2(pid);
 
@@ -592,7 +640,27 @@ var ganttTask = function(options){
 
                 $("#ganttMain").append($divGrp);
 
-                $divGrp.data("tag", grp);
+                $divTr = $("<tr />");
+                $divLabel = $("<td />");
+                $divTr.append($divLabel);
+
+                $divLabel.attr("id", "ganttLabel-Group-" + grp.getId());
+                $divLabel.text(grp.getName());
+                $divLabel.css("border-width", "0px 1px 1px 0px");
+                $divLabel.css("border-style", "solid");
+                $divLabel.css("border-color", "#f1f3f1");
+                $divLabel.css("height", "24px");
+                $divLabel.attr("class", "ganttLabel-Group");
+
+                $("#ganttTasks").append($divTr);
+
+                $divGrp.data("ctltag", grp);
+
+
+                if (settings.evGroupClick != null){
+                    $divGrp.click(function(){ settings.evGroupClick(grp); } );
+                }
+
 
                 wkTop += 24;
 
@@ -641,16 +709,16 @@ var ganttTask = function(options){
                     $divPrj.on("dragstop", function(event , ui){
                         
                         var ret = calcDateFromLeft(ui.position.left);
-                        var tag = $(this).data("tag");
-                        var preDt = tag.getStartDate();
-                        var id = tag.getId();
+                        var ctltag = $(this).data("ctltag");
+                        var preDt = ctltag.getStartDate();
+                        var id = ctltag.getId();
                         
-                        tag.setStartDate(ret);
+                        ctltag.setStartDate(ret);
 
                         $("#ganttProjectSet-" + id).css("left", ui.position.left);
 
-                        for (var tc = 0; tc < tag.getTasks().length; tc++){
-                            var wkTask = tag.getTasks()[tc];
+                        for (var tc = 0; tc < ctltag.getTasks().length; tc++){
+                            var wkTask = ctltag.getTasks()[tc];
                             var wkT = wkTask.getStartDate().getTime();
                             var sa = ret - preDt.getTime();
 
@@ -660,9 +728,9 @@ var ganttTask = function(options){
                         }
 
 
-                        var info = getProjInfo(tag.getParent());
+                        var info = getProjInfo(ctltag.getParent());
 
-                        $divGrp = $("#ganttGroup-" + tag.getParent().getId());
+                        $divGrp = $("#ganttGroup-" + ctltag.getParent().getId());
 
                         var lt = calcDateLeft(info[0]);
                         $divGrp.css("left", lt + "px");
@@ -670,7 +738,7 @@ var ganttTask = function(options){
 
                         //event
                         if (settings.evProjectChanged != null){
-                            settings.evProjectChanged(tag);
+                            settings.evProjectChanged(ctltag);
                         }
 
                     });
@@ -683,31 +751,49 @@ var ganttTask = function(options){
                         var wid = Math.round(ui.size.width / GANTT_DAY_WIDTH) * GANTT_DAY_WIDTH;
                         $(this).css("width", wid);
 
-                        var tag = $(this).data("tag");
-                        tag.setDays(wid / GANTT_DAY_WIDTH);
-                        var id = tag.getId();
+                        var ctltag = $(this).data("ctltag");
+                        ctltag.setDays(wid / GANTT_DAY_WIDTH);
+                        var id = ctltag.getId();
 
                         $("#ganttProjectSet-" + id).css("width", wid);
-                        tag.setDays(wid / GANTT_DAY_WIDTH);
+                        ctltag.setDays(wid / GANTT_DAY_WIDTH);
 
 
 
-                        for (var tc = 0 ; tc < tag.getTasks().length ; tc++){
-                            var wkTask = tag.getTasks()[tc]
+                        for (var tc = 0 ; tc < ctltag.getTasks().length ; tc++){
+                            var wkTask = ctltag.getTasks()[tc]
                             $("#ganttTask-" + wkTask.getId())
-                                .resizable("option", "maxWidth", calcMaxWidth(tag, wkTask));
+                                .resizable("option", "maxWidth", calcMaxWidth(ctltag, wkTask));
 
                         }
 
                         //event
                         if (settings.evProjectChanged != null){
-                            settings.evProjectChanged(tag);
+                            settings.evProjectChanged(ctltag);
                         }
                     });
                     
 
 
-                    $divPrj.data("tag", prj)
+                    $divTr = $("<tr />");
+                    $divLabel = $("<td />");
+                    $divTr.append($divLabel);
+                    $divLabel.attr("id", "ganttLabel-Project-" + prj.getId());
+                    $divLabel.text(prj.getName());
+                    $divLabel.css("border-width", "0px 1px 1px 0px");
+                    $divLabel.css("border-style", "solid");
+                    $divLabel.css("border-color", "#f1f3f1");
+                    $divLabel.css("height", "24px");
+                    $divLabel.attr("class", "ganttLabel-Project");
+
+                    $("#ganttTasks").append($divTr);
+
+
+                    $divPrj.data("ctltag", prj)
+
+                    if (settings.evProjectClick != null){
+                        $divPrj.click(function(){ settings.evProjectClick(prj); } );
+                    }
 
                     wkTop += 24;
 
@@ -776,22 +862,22 @@ var ganttTask = function(options){
                         $divTask.on("dragstop", function(event , ui){
                             
                             
-                            var tag = $(this).data("tag");
-                            var ptPrj = tag.getParent();
+                            var ctltag = $(this).data("ctltag");
+                            var ptPrj = ctltag.getParent();
 
                             var wkT = ptPrj.getStartDate().getTime() + (ui.position.left / GANTT_DAY_WIDTH) * GANTT_DAY_MILSEC;
                             
                             var wkDt = new Date();
                             wkDt.setTime(wkT);
 
-                            tag.setStartDate(wkDt);
+                            ctltag.setStartDate(wkDt);
 
 
                             $("#ganttProject-" + ptPrj.getId()).resizable("option", "minWidth" ,calcMinWidthPrj(ptPrj));
 
                             //event
                             if (settings.evTaskChanged != null){
-                                settings.evTaskChanged(tag);
+                                settings.evTaskChanged(ctltag);
                             }
 
                         });
@@ -800,20 +886,40 @@ var ganttTask = function(options){
                             var wid = Math.round(ui.size.width / GANTT_DAY_WIDTH) * GANTT_DAY_WIDTH;
                             $(this).css("width", wid);
 
-                            var tag = $(this).data("tag");
-                            tag.setDays(wid / GANTT_DAY_WIDTH);
+                            var ctltag = $(this).data("ctltag");
+                            ctltag.setDays(wid / GANTT_DAY_WIDTH);
 
-                            var ptPrj = tag.getParent();
+                            var ptPrj = ctltag.getParent();
 
                             $("#ganttProject-" + ptPrj.getId()).resizable("option", "minWidth" ,calcMinWidthPrj(ptPrj));
 
                             //event
                             if (settings.evTaskChanged != null){
-                                settings.evTaskChanged(tag);
+                                settings.evTaskChanged(ctltag);
                             }
                         });
 
-                        $divTask.data("tag", task);
+
+                        $divTr = $("<tr />");
+                        $divLabel = $("<td />");
+                        $divTr.append($divLabel);
+                        $divLabel.attr("id", "ganttLabel-Task-" + task.getId());
+                        $divLabel.text(task.getName());
+                        $divLabel.css("border-width", "0px 1px 1px 0px");
+                        $divLabel.css("border-style", "solid");
+                        $divLabel.css("border-color", "#f1f3f1");
+                        $divLabel.css("height", "24px");
+                        $divLabel.attr("class", "ganttLabel-Task");
+
+                        $("#ganttTasks").append($divTr);
+
+
+                        $divTask.data("ctltag", task);
+
+                        if (settings.evTaskClick != null){
+                            $divTask.click(function(){ settings.evTaskClick(task); } );
+                        }
+
 
 
                         wktaskTop += 24
@@ -889,15 +995,12 @@ var ganttTask = function(options){
 
 
         function calcMinWidthPrj(rcvP){
-            var minD = null , maxT = null;
+            var  maxT = null;
 
 
             for (var i = 0 ; i < rcvP.getTasks().length ; i++){
                 var task = rcvP.getTasks()[i];
                 
-                if (minD == null || minD > task.getStartDate()){
-                    minD = task.getStartDate();
-                }
 
                 var wkT = task.getStartDate().getTime() + task.getDays() * GANTT_DAY_MILSEC;
                 if (maxT == null || maxT < wkT){
@@ -905,7 +1008,7 @@ var ganttTask = function(options){
                 }
             }
 
-            var sa = (maxT - minD.getTime()) / GANTT_DAY_MILSEC;
+            var sa = (maxT - rcvP.getStartDate().getTime()) / GANTT_DAY_MILSEC;
 
             return  sa * GANTT_DAY_WIDTH ;
         }
@@ -1136,11 +1239,11 @@ var ganttTask = function(options){
             removeGroup: function(gid){
                 return removeGroup(git);
             },
-            getGroup: function(gid){
-                return getGroup(gid);
+            getGroup: function(gid, tag){
+                return getGroup(gid, tag);
             },
-            addProject: function(gid, name, startDate, days){
-                return addProject(gid, name, startDate, days);
+            addProject: function(gid, name, startDate, days, tag){
+                return addProject(gid, name, startDate, days, tag);
             },
             removeProject: function(gid, pid){
                 return removeProject(git, pid);
@@ -1151,8 +1254,8 @@ var ganttTask = function(options){
             getProject2: function(pid){
                 return getProject2(pid);
             },
-            addTask: function(pid, name, startDate, days){
-                return addTask(pid, name, startDate, days);
+            addTask: function(pid, name, startDate, days, tag){
+                return addTask(pid, name, startDate, days, tag);
             },
             removeTask: function(pid, tid){
                 return removeTask(pit, tid);
