@@ -7,6 +7,7 @@ JqGantt::Application.routes.draw do
 
   get "prototype1s/test"
   get "prototype2s/test"
+  get "prototype3s/test"
   
 
   # The priority is based upon order of creation: first created -> highest priority.
