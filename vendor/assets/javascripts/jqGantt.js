@@ -784,6 +784,7 @@ var ganttTask = function(options){
                     $divLabel.css("border-style", "solid");
                     $divLabel.css("border-color", "#f1f3f1");
                     $divLabel.css("height", "24px");
+                    $divLabel.css("width", GANTT_TASKS_WIDTH);
                     $divLabel.attr("class", "ganttLabel-Project");
 
                     $("#ganttTasks").append($divTr);
@@ -1135,25 +1136,73 @@ var ganttTask = function(options){
                 alert(wk);
                 */
 
-                var $corner = $("<div />");
-                $corner.attr("id", "ganttCorner");
-                $corner.css("position", "absolute");
-                $corner.css("left", "0px");
-                $corner.css("width", GANTT_TASKS_WIDTH + "px");
-                $corner.css("height", "48px");
+                var $tbl = $("<table />");
+                $tbl.attr("id", "ganttTable");
 
-                $(elem).append($corner);
+                $(elem).append($tbl);
 
+                var $tbody = $("<tbody />");
+                $tbl.append($tbody)
+
+                var $tr = $("<tr />");
+                $tbody.append($tr);
+
+                //TD element for ganttLeftPane (Task)
+                var $tdLeft = $("<td />");
+                $tdLeft.attr("valign", "top");
+                $tr.append($tdLeft);
+
+                var $div = $("<div />");
+                $div.attr("id", "ganttTasksPane");
+                $div.css("position", "relative");
+                $div.css("top", "48px");
+                $div.css("width", "200px");
+                $div.css("height", "480px");
+                $div.css("overflow", "hidden");
+
+                $tdLeft.append($div);
+
+                var $div2 = $("<div />");
+                $div2.attr("id", "ganttTasksParent");
+                $div2.css("position", "relative");
+                $div2.css("width", "200px");
+                $div2.css("height", "480px");
+
+                $div.append($div2);
+
+                var $tbl2 = $("<table />");
+                $tbl2.attr("id", "ganttTasks");
+
+                $div2.append($tbl2);
+
+
+                //TD element for ganttRightPane
+                $tdRight = $("<td />");
+                $tr.append($tdRight);
+
+                var $div3 = $("<div />");
+                $div3.attr("id", "ganttDayPane");
+                $div3.css("width", GANTT_DAY_WIDTH * (31 + GANTT_BACK_DAYS));
+                $div3.css("overflow", "hidden")
+
+                $tdRight.append($div3);
+
+                var $div4 = $("<div />");
+                $div4.css("position", "relative");
+
+                var sa = (end.getTime() - sta.getTime()) / (GANTT_DAY_MILSEC)
+                $div4.css("width", String(GANTT_DAY_WIDTH * (sa +1)) + "px");
+
+                $div3.append($div4);
 
                 var $gday = $("<table />");
                 $gday.attr("id", "ganttDay");
-                $gday.css("position", "absolute");
-                $gday.css("left", GANTT_TASKS_WIDTH + "px");
-                var sa = (end.getTime() - sta.getTime()) / (GANTT_DAY_MILSEC)
+                $gday.css("position", "relative");
+                $gday.css("left", "0px");
                 $gday.css("width", String(GANTT_DAY_WIDTH * (sa +1)) + "px");
                 $gday.css("height", "48px");
 
-                $(elem).append($gday);
+                $div4.append($gday);
 
 
                 $tr = $("<tr />");
@@ -1187,29 +1236,40 @@ var ganttTask = function(options){
                 }
 
 
-                var $gtask = $("<table />");
-                $gtask.attr("id", "ganttTasks");
-                $gtask.css("position", "absolute");
-                $gtask.css("left", "0px");
-                $gtask.css("top", "48px");
-                $gtask.css("width", GANTT_TASKS_WIDTH + "px");
-                $gtask.css("height", "0px");
+                var $div5 = $("<div />");
+                $div5.attr("id", "ganttMainParent");
+                $div5.css("width", GANTT_DAY_WIDTH * (31 + GANTT_BACK_DAYS + 1) + "px");
+                $div5.css("height", (480 + 24) + "px");
+                $div5.css("overflow", "scroll");
 
-                $(elem).append($gtask);
+                $tdRight.append($div5);
+
 
                 var $gmain = $("<div />");
                 $gmain.attr("id", "ganttMain");
-                $gmain.css("position", "absolute");
-                $gmain.css("left", (GANTT_TASKS_WIDTH + 1) + "px");
-                $gmain.css("top", "48px");
+                $gmain.css("position", "relative");
+                $gmain.css("left", "0px");
+                $gmain.css("top", "0px");
                 $gmain.css("width", String(GANTT_DAY_WIDTH * (sa +1)) + "px");
-                $gmain.css("height", "200px");
+                $gmain.css("height", "480px");
                 $gmain.css("background-image", "url('/images/week.png')");
                 $gmain.css("background-repeat", "repeat");
-                $gmain.css("background-position", "-48px 0px");
+
+                var youbi = sta.getDay();
+                $gmain.css("background-position", (-1 * (youbi -1) * GANTT_DAY_WIDTH) + "px 0px");
 
 
-                $(elem).append($gmain);
+                $div5.append($gmain);
+
+
+
+                //Scroll
+                $("#ganttMainParent").scroll(function (ev){
+
+                    $("#ganttDayPane").scrollLeft($(this).scrollLeft());
+
+                    $("#ganttTasksPane").scrollTop($(this).scrollTop());
+                });
 
 
             };

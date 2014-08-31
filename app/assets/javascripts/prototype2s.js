@@ -59,11 +59,14 @@ $(function(){
 	gantt.addTask(prj4.getId(),"child2", new Date(2014, 8-1, 21), 1);
 
 
-	var prj5 = gantt.addProject(grpSub2.getId(), "test", new Date(2014, 8-1, 25), 4);
+	var prj5 = gantt.addProject(grpSub2.getId(), "test", new Date(2014, 8-1, 25), 8);
 
 	gantt.addTask(prj5.getId(),"child1", new Date(2014, 8-1, 25), 2);
 	gantt.addTask(prj5.getId(),"child2", new Date(2014, 8-1, 26), 1);
 	gantt.addTask(prj5.getId(),"child3", new Date(2014, 8-1, 27), 2);
+	gantt.addTask(prj5.getId(),"child4", new Date(2014, 8-1, 28), 1);
+	gantt.addTask(prj5.getId(),"child5", new Date(2014, 8-1, 29), 2);
+	gantt.addTask(prj5.getId(),"child6", new Date(2014, 8-1, 31), 2);
 
 	gantt.redraw();
 
