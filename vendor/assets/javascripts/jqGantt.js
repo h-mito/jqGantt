@@ -129,6 +129,7 @@ var ganttProject = function(options){
         name: "",
         startDate: new Date(),
         days: 1,
+        expand: true, 
         tag: null,
         tasks: []
     };
@@ -190,6 +191,14 @@ var ganttProject = function(options){
 
     var setDays = function(days){
         settings.days = days;
+    }
+
+    var getExpand = function(){
+        return settings.expand;
+    }
+
+    var setExpand = function(expand){
+        settings.expand = expand;
     }
 
     var getTag = function(){
@@ -265,6 +274,12 @@ var ganttProject = function(options){
         },
         setDays : function(days){
             setDays(days);
+        },                        
+        getExpand : function(){
+            return getExpand();
+        },
+        setExpand : function(expand){
+            setExpand(expand);
         },                        
         getTag : function(){
             return getTag();
@@ -425,6 +440,7 @@ var ganttTask = function(options){
         var defaults = {
             startDate : new Date,
             months: 2,
+            lines: 20,
             groups: [],
             maxGid: 0,
             maxPid: 0,
@@ -580,14 +596,17 @@ var ganttTask = function(options){
 
         function clsAll(){
             for (var i = 1; i <= settings.maxGid; i++){
-                $("ganttGroup-" + i).remove();
+                $("#ganttGroup-" + i).remove();
+                $("#ganttLabel-Group-" + i).remove();
             }
             for (var i = 1; i <= settings.maxPid; i++){
-                $("ganttProject-" + i).remove();
-                $("ganttProjectSet-" + i).remove();
+                $("#ganttProject-" + i).remove();
+                $("#ganttProjectSet-" + i).remove();
+                $("#ganttLabel-Project-" + i).remove();
             }
             for (var i = 1; i <= settings.maxTid; i++){
-                $("ganttTask-" + i).remove();
+                $("#ganttTask-" + i).remove();
+                $("#ganttLabel-Task-" + i).remove();
             }
         }
 
@@ -778,14 +797,36 @@ var ganttTask = function(options){
                     $divTr = $("<tr />");
                     $divLabel = $("<td />");
                     $divTr.append($divLabel);
+
+                    var $img = $("<img />");
+                    if (prj.getExpand() == true){
+                        $img.attr("src", "/images/minus.png");
+                    }
+                    else{
+                        $img.attr("src", "/images/plus.png");   
+                    }
+
+                    var $lbl = $("<label />");
+                    $lbl.text(prj.getName());
+
+                    $divLabel.append($img);
+                    $divLabel.append($lbl);
                     $divLabel.attr("id", "ganttLabel-Project-" + prj.getId());
-                    $divLabel.text(prj.getName());
                     $divLabel.css("border-width", "0px 1px 1px 0px");
                     $divLabel.css("border-style", "solid");
                     $divLabel.css("border-color", "#f1f3f1");
                     $divLabel.css("height", "24px");
                     $divLabel.css("width", GANTT_TASKS_WIDTH);
                     $divLabel.attr("class", "ganttLabel-Project");
+
+                    $img.click(function(){
+                        var wkPid = $(this).parent().attr("id");
+                        var wkPid = wkPid.replace("ganttLabel-Project-","");
+                        var wkPrj = getProject2(wkPid);
+                        wkPrj.setExpand(!wkPrj.getExpand());
+                        redraw();
+                    });
+
 
                     $("#ganttTasks").append($divTr);
 
@@ -816,6 +857,10 @@ var ganttTask = function(options){
 
 
                     //=== Task
+                    if (prj.getExpand() == false){
+                        continue;
+                    }
+
                     var wktaskTop = 0;
                     for (var k = 0 ; k < prj.getTasks().length; k++){
                         var task = prj.getTasks()[k];
@@ -1157,7 +1202,7 @@ var ganttTask = function(options){
                 $div.css("position", "relative");
                 $div.css("top", "48px");
                 $div.css("width", "200px");
-                $div.css("height", "480px");
+                $div.css("height", settings.lines * 24 + "px");
                 $div.css("overflow", "hidden");
 
                 $tdLeft.append($div);
@@ -1166,7 +1211,7 @@ var ganttTask = function(options){
                 $div2.attr("id", "ganttTasksParent");
                 $div2.css("position", "relative");
                 $div2.css("width", "200px");
-                $div2.css("height", "480px");
+                $div2.css("height", settings.lines * 24 + "px");
 
                 $div.append($div2);
 
@@ -1239,7 +1284,7 @@ var ganttTask = function(options){
                 var $div5 = $("<div />");
                 $div5.attr("id", "ganttMainParent");
                 $div5.css("width", GANTT_DAY_WIDTH * (31 + GANTT_BACK_DAYS + 1) + "px");
-                $div5.css("height", (480 + 24) + "px");
+                $div5.css("height", settings.lines * 24 + "px");
                 $div5.css("overflow", "scroll");
 
                 $tdRight.append($div5);
@@ -1251,7 +1296,7 @@ var ganttTask = function(options){
                 $gmain.css("left", "0px");
                 $gmain.css("top", "0px");
                 $gmain.css("width", String(GANTT_DAY_WIDTH * (sa +1)) + "px");
-                $gmain.css("height", "480px");
+                $gmain.css("height", settings.lines * 24 + "px");
                 $gmain.css("background-image", "url('/images/week.png')");
                 $gmain.css("background-repeat", "repeat");
 
