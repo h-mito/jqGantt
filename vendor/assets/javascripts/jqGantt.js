@@ -29,6 +29,7 @@ var ganttGroup = function(options){
     var defaults = {
         id: -1,
         name: "",
+        percent: 0,
         tag: null,
         projects: []
     };
@@ -48,6 +49,14 @@ var ganttGroup = function(options){
 
     var setName = function(name){
         settings.name = name;
+    }
+
+    var getPercent = function(){
+        return settings.percent;
+    }
+
+    var setPercent = function(per){
+        settings.percent = per;
     }
 
     var getTag = function(){
@@ -81,6 +90,17 @@ var ganttGroup = function(options){
         return null;
     }
 
+    var recalcPercent = function(){
+        var sumDays = 0 , sumDays2 = 0;
+
+        for (var i = 0 ; i < settings.projects.length ; i++){
+            sumDays += settings.projects[i].getDays();
+            sumDays2 += settings.projects[i].getDays() * (settings.projects[i].getPercent() / 100);
+        }
+
+        setPercent(sumDays2 * 100 / sumDays);
+    }
+
 
     var globals = {
         getId : function(){
@@ -94,6 +114,12 @@ var ganttGroup = function(options){
         },
         setName : function(name){
             return setName(name);
+        },
+        getPercent : function(){
+            return getPercent();
+        },
+        setPercent : function(per){
+            setPercent(per);
         },
         getTag : function(){
             return getTag();
@@ -112,6 +138,9 @@ var ganttGroup = function(options){
         },
         getProjects : function(){
             return settings.projects;
+        },
+        recalcPercent: function(){
+            recalcPercent();
         }
 
     }
@@ -130,6 +159,7 @@ var ganttProject = function(options){
         startDate: new Date(),
         days: 1,
         expand: true, 
+        percent: 0,
         tag: null,
         tasks: []
     };
@@ -201,6 +231,14 @@ var ganttProject = function(options){
         settings.expand = expand;
     }
 
+    var getPercent = function(){
+        return settings.percent;
+    }
+
+    var setPercent = function(per){
+        settings.percent = per;
+    }
+
     var getTag = function(){
         return settings.tag;
     }
@@ -229,6 +267,19 @@ var ganttProject = function(options){
             }
         }
         return null;
+    }
+
+    var recalcPercent = function(){
+        var sumDays = 0 , sumDays2 = 0;
+
+        for (var i = 0 ; i < settings.tasks.length ; i++){
+            sumDays += settings.tasks[i].getDays();
+            sumDays2 += settings.tasks[i].getDays() * (settings.tasks[i].getPercent() / 100);
+        }
+
+        setPercent(sumDays2 * 100 / sumDays);
+
+        settings.parent.recalcPercent();
     }
 
 
@@ -281,6 +332,12 @@ var ganttProject = function(options){
         setExpand : function(expand){
             setExpand(expand);
         },                        
+        getPercent : function(){
+            return getPercent();
+        },
+        setPercent : function(per){
+            setPercent(per);
+        },
         getTag : function(){
             return getTag();
         },
@@ -298,6 +355,9 @@ var ganttProject = function(options){
         },
         getTasks : function(){
             return settings.tasks;
+        },
+        recalcPercent : function(){
+            recalcPercent();
         }
 
     }
@@ -314,6 +374,7 @@ var ganttTask = function(options){
         name: "",
         startDate: new Date(),
         days: 1,
+        percent: 0,
         tag: null
     };
 
@@ -366,6 +427,15 @@ var ganttTask = function(options){
 
     var setDays = function(days){
         settings.days = days;
+    }
+
+    var getPercent = function(){
+        return settings.percent;
+    }
+
+    var setPercent = function(per){
+        settings.percent = per;
+        settings.parent.recalcPercent();
     }
 
     var getTag = function(){
@@ -564,11 +634,11 @@ var ganttTask = function(options){
         }
 
 
-        var addTask = function(pid, name, startDate, days, tag){
+        var addTask = function(pid, name, startDate, days, percent, tag){
             var tid = settings.maxTid + 1;
             settings.maxTid += 1;
 
-            var task = ganttTask({projectId: pid, id: tid, name: name, startDate: startDate, days: days, tag: tag});
+            var task = ganttTask({projectId: pid, id: tid, name: name, startDate: startDate, days: days, percent: percent, tag: tag});
             
             var prj = getProject2(pid);
 
@@ -610,6 +680,8 @@ var ganttTask = function(options){
                 $("#ganttLabel-Task-" + i).remove();
                 $("#ganttTask-Label-" + i).remove();
             }
+
+            $("#ganttTasks").children().remove();
         }
 
         function redrawCaption($elem, obj){
@@ -619,9 +691,20 @@ var ganttTask = function(options){
                 $elem.text(txt);
         }
 
+        function recalcAll(){
+            for (var i = 0 ; i < settings.groups.length ; i++){
+                var grp = settings.groups[i];
+                for (var j = 0; j < grp.getProjects().length ; j++){
+                    var prj = grp.getProjects()[j];
+                    prj.recalcPercent();
+                }
+            }            
+        }
+
         var redraw = function(){
             var wkTop = 0;
             clsAll();
+            recalcAll();
 
             for (var i = 0 ; i < settings.groups.length ; i++){
                 //=== Group
@@ -646,7 +729,7 @@ var ganttTask = function(options){
 
                 $div1 = $("<div />");
                 $div1.css("position", "relative");
-                $div1.css("width", "40%");
+                $div1.css("width", grp.getPercent() + "%");
                 $div1.css("height", "14px");
                 $div1.css("background-color",GANTT_GROUP_COLOR);
                 $div1.css("background-image", "url('/images/bar.png')");
@@ -656,7 +739,7 @@ var ganttTask = function(options){
 
                 $div2 = $("<div />");
                 $div2.css("position", "relative");
-                $div2.css("width", "60%");
+                $div2.css("width", (100 - grp.getPercent()) + "%");
                 $div2.css("height", "14px");
                 $div2.css("background-color",GANTT_NOT_COLOR);
                 $div2.css("background-image", "url('/images/bar.png')");
@@ -685,7 +768,12 @@ var ganttTask = function(options){
 
 
                 if (settings.evGroupClick != null){
-                    $divGrp.click(function(){ settings.evGroupClick(grp); } );
+                    $divGrp.click(
+                        function(){ 
+                            var ctltag = $(this).data("ctltag");
+                            settings.evGroupClick(ctltag); 
+                        } 
+                    );
                 }
 
 
@@ -709,7 +797,7 @@ var ganttTask = function(options){
 
                     $div1 = $("<div />");
                     $div1.css("position", "relative");
-                    $div1.css("width", "40%");
+                    $div1.css("width", prj.getPercent() + "%");
                     $div1.css("height", "14px");
                     $div1.css("background-color",GANTT_PROJECT_COLOR);
                     $div1.css("background-image", "url('/images/bar.png')");
@@ -719,7 +807,7 @@ var ganttTask = function(options){
 
                     $div2 = $("<div />");
                     $div2.css("position", "relative");
-                    $div2.css("width", "60%");
+                    $div2.css("width", (100 - prj.getPercent()) + "%");
                     $div2.css("height", "14px");
                     $div2.css("background-color",GANTT_NOT_COLOR);
                     $div2.css("background-image", "url('/images/bar.png')");
@@ -818,10 +906,13 @@ var ganttTask = function(options){
 
                         }
 
+                        /*
                         var wkLeft = calcDateLeft(ctltag.getStartDate());
                         wkLeft += ctltag.getDays() * GANTT_DAY_WIDTH;
                         $("#ganttProject-Label-" + ctltag.getId()).css("left", wkLeft)
                         redrawCaption($("#ganttProject-Label-" + ctltag.getId()), ctltag);  
+                        */
+                        redraw();
 
                         //event
                         if (settings.evProjectChanged != null){
@@ -843,7 +934,7 @@ var ganttTask = function(options){
                         $img.attr("src", "/images/plus.png");   
                     }
 
-                    var $lbl = $("<label />");
+                    var $lbl = $("<span />");
                     $lbl.text(prj.getName());
 
                     $divLabel.append($img);
@@ -871,7 +962,12 @@ var ganttTask = function(options){
                     $divPrj.data("ctltag", prj)
 
                     if (settings.evProjectClick != null){
-                        $divPrj.click(function(){ settings.evProjectClick(prj); } );
+                        $divPrj.click(
+                            function(){
+                                var ctltag = $(this).data("ctltag");
+                                settings.evProjectClick(ctltag); 
+                            } 
+                        );
                     }
 
                     wkTop += 24;
@@ -915,7 +1011,7 @@ var ganttTask = function(options){
 
                         $div1 = $("<div />");
                         $div1.css("position", "relative");
-                        $div1.css("width", "40%");
+                        $div1.css("width", task.getPercent() + "%");
                         $div1.css("height", "14px");
                         $div1.css("background-color",GANTT_TASK_COLOR);
                         $div1.css("background-image", "url('/images/bar.png')");
@@ -925,7 +1021,7 @@ var ganttTask = function(options){
 
                         $div2 = $("<div />");
                         $div2.css("position", "relative");
-                        $div2.css("width", "60%");
+                        $div2.css("width", (100 - task.getPercent()) + "%");
                         $div2.css("height", "14px");
                         $div2.css("background-color",GANTT_NOT_COLOR);
                         $div2.css("background-image", "url('/images/bar.png')");
@@ -998,10 +1094,14 @@ var ganttTask = function(options){
 
                             $("#ganttProject-" + ptPrj.getId()).resizable("option", "minWidth" ,calcMinWidthPrj(ptPrj));
 
+                            /*    
                             var wkLeft = calcDateLeft(ctltag.getStartDate());
                             wkLeft += ctltag.getDays() * GANTT_DAY_WIDTH;
                             $("#ganttTask-Label-" + ctltag.getId()).css("left", wkLeft)
                             redrawCaption($("#ganttTask-Label-" + ctltag.getId()), ctltag);  
+                            */
+
+                            redraw();
 
 
                             //event
@@ -1028,7 +1128,10 @@ var ganttTask = function(options){
                         $divTask.data("ctltag", task);
 
                         if (settings.evTaskClick != null){
-                            $divTask.click(function(){ settings.evTaskClick(task); } );
+                            $divTask.click(function(){ 
+                                var ctltag = $(this).data("ctltag");
+                                settings.evTaskClick(ctltag); 
+                            } );
                         }
 
 
@@ -1040,8 +1143,16 @@ var ganttTask = function(options){
                 }
             }
 
+            var DUMMY_COUNT = 10;
+            for (var xx = 0; xx < DUMMY_COUNT ; xx++){
+                $divTr = $("<tr />");
+                $divLabel = $("<td />");
+                $divLabel.css("height", "24px");
+                $divTr.append($divLabel);
+                $("#ganttTasks").append($divTr);
+            }
 
-            $("#ganttMain").css("height", wkTop);
+            $("#ganttMain").css("height", wkTop + 24 * DUMMY_COUNT);
 
 
 
@@ -1427,8 +1538,8 @@ var ganttTask = function(options){
             getProject2: function(pid){
                 return getProject2(pid);
             },
-            addTask: function(pid, name, startDate, days, tag){
-                return addTask(pid, name, startDate, days, tag);
+            addTask: function(pid, name, startDate, days, percent, tag){
+                return addTask(pid, name, startDate, days, percent, tag);
             },
             removeTask: function(pid, tid){
                 return removeTask(pit, tid);

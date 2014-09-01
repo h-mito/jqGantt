@@ -5,7 +5,8 @@
 }
 .ganttLabel-Project{
 	padding-left: 5px;
-	label{
+	height: 24px;
+	span{
 		padding-left: 5px;
 		color: #353535;
 	}
@@ -26,3 +27,9 @@
 	font-size: 11px;
 }
 
+#dialog-form {
+	div.clearfix{
+		clear: both;
+	}
+
+}
