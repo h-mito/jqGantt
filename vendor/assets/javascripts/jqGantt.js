@@ -603,13 +603,21 @@ var ganttTask = function(options){
                 $("#ganttProject-" + i).remove();
                 $("#ganttProjectSet-" + i).remove();
                 $("#ganttLabel-Project-" + i).remove();
+                $("#ganttProject-Label-" + i).remove();
             }
             for (var i = 1; i <= settings.maxTid; i++){
                 $("#ganttTask-" + i).remove();
                 $("#ganttLabel-Task-" + i).remove();
+                $("#ganttTask-Label-" + i).remove();
             }
         }
 
+        function redrawCaption($elem, obj){
+            var txt = "【ID】" + obj.getId() + " " + obj.getName() + " 【日数】 " + obj.getDays()
+                + " 【開始】 " + formatDate(obj.getStartDate())
+                + " 【日数】 " + obj.getDays();
+                $elem.text(txt);
+        }
 
         var redraw = function(){
             var wkTop = 0;
@@ -720,7 +728,20 @@ var ganttTask = function(options){
                     $divPrj.append($div2);
 
 
+                    $divPrjLabel = $("<div />");
+                    $divPrjLabel.attr("id","ganttProject-Label-" + prj.getId());
+                    $divPrjLabel.attr("class", "ganttProject-Label");
+                    $divPrjLabel.css("position", "absolute");
+                    $divPrjLabel.css("left", (lt + prj.getDays() * GANTT_DAY_WIDTH) + "px");
+                    $divPrjLabel.css("top", (wkTop + 4) + "px");
+
+                    redrawCaption($divPrjLabel, prj);
+
+
                     $("#ganttMain").append($divPrj);
+                    $("#ganttMain").append($divPrjLabel);
+
+
                     $divPrj.draggable({addClasses:false, axis: "x", containment:"#ganttMain", grid: [GANTT_DAY_WIDTH,24] })
                             .resizable({alsoResize: "#mirror", handles: "e" ,maxHeight: 16, minHeight: 16, minWidth: GANTT_DAY_WIDTH});
 
@@ -744,7 +765,18 @@ var ganttTask = function(options){
                             var wkD = wkTask.getStartDate();
                             wkD.setTime(wkD.getTime() + sa);
                             wkTask.setStartDate(wkD);
+
+                            var wkLeft = calcDateLeft(wkTask.getStartDate());
+                            wkLeft += wkTask.getDays() * GANTT_DAY_WIDTH;
+                            $("#ganttTask-Label-" + wkTask.getId()).css("left", wkLeft)
+                            redrawCaption($("#ganttTask-Label-" + wkTask.getId()), wkTask);                            
                         }
+
+
+                        redrawCaption($("#ganttProject-Label-" + ctltag.getId()), ctltag);
+                        wkLeft = calcDateLeft(ctltag.getStartDate());
+                        wkLeft += ctltag.getDays() * GANTT_DAY_WIDTH;
+                        $("#ganttProject-Label-" + ctltag.getId()).css("left", wkLeft)
 
 
                         var info = getProjInfo(ctltag.getParent());
@@ -785,6 +817,11 @@ var ganttTask = function(options){
                                 .resizable("option", "maxWidth", calcMaxWidth(ctltag, wkTask));
 
                         }
+
+                        var wkLeft = calcDateLeft(ctltag.getStartDate());
+                        wkLeft += ctltag.getDays() * GANTT_DAY_WIDTH;
+                        $("#ganttProject-Label-" + ctltag.getId()).css("left", wkLeft)
+                        redrawCaption($("#ganttProject-Label-" + ctltag.getId()), ctltag);  
 
                         //event
                         if (settings.evProjectChanged != null){
@@ -896,6 +933,22 @@ var ganttTask = function(options){
 
                         $divTask.append($div2);
 
+
+                        var lt2 = calcDateLeft(task.getStartDate());
+
+                        $divTaskLabel = $("<div />");
+                        $divTaskLabel.attr("id","ganttTask-Label-" + task.getId());
+                        $divTaskLabel.attr("class", "ganttTask-Label");
+                        $divTaskLabel.css("position", "absolute");
+                        $divTaskLabel.css("left", (lt2 + task.getDays() * GANTT_DAY_WIDTH ) + "px");
+                        $divTaskLabel.css("top", (wkTop + 4) + "px");
+
+                        redrawCaption($divTaskLabel, task);
+                       
+                        $("#ganttMain").append($divTaskLabel);
+
+
+
                         $divPrjSet.append($divTask);
 
 
@@ -921,6 +974,12 @@ var ganttTask = function(options){
 
                             $("#ganttProject-" + ptPrj.getId()).resizable("option", "minWidth" ,calcMinWidthPrj(ptPrj));
 
+                            var wkLeft = calcDateLeft(ctltag.getStartDate());
+                            wkLeft += ctltag.getDays() * GANTT_DAY_WIDTH;
+                            $("#ganttTask-Label-" + ctltag.getId()).css("left", wkLeft)
+                            redrawCaption($("#ganttTask-Label-" + ctltag.getId()), ctltag);  
+
+
                             //event
                             if (settings.evTaskChanged != null){
                                 settings.evTaskChanged(ctltag);
@@ -938,6 +997,12 @@ var ganttTask = function(options){
                             var ptPrj = ctltag.getParent();
 
                             $("#ganttProject-" + ptPrj.getId()).resizable("option", "minWidth" ,calcMinWidthPrj(ptPrj));
+
+                            var wkLeft = calcDateLeft(ctltag.getStartDate());
+                            wkLeft += ctltag.getDays() * GANTT_DAY_WIDTH;
+                            $("#ganttTask-Label-" + ctltag.getId()).css("left", wkLeft)
+                            redrawCaption($("#ganttTask-Label-" + ctltag.getId()), ctltag);  
+
 
                             //event
                             if (settings.evTaskChanged != null){
@@ -977,6 +1042,9 @@ var ganttTask = function(options){
 
 
             $("#ganttMain").css("height", wkTop);
+
+
+
 
         };
 
