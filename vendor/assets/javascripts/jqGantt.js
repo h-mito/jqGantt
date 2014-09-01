@@ -1143,7 +1143,7 @@ var ganttTask = function(options){
                 }
             }
 
-            var DUMMY_COUNT = 10;
+            var DUMMY_COUNT = 5;
             for (var xx = 0; xx < DUMMY_COUNT ; xx++){
                 $divTr = $("<tr />");
                 $divLabel = $("<td />");
@@ -1152,7 +1152,7 @@ var ganttTask = function(options){
                 $("#ganttTasks").append($divTr);
             }
 
-            $("#ganttMain").css("height", wkTop + 24 * DUMMY_COUNT);
+            $("#ganttMain").css("height", wkTop + 24 * DUMMY_COUNT -16);
 
 
 
