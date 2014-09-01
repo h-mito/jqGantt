@@ -685,7 +685,7 @@ var ganttTask = function(options){
         }
 
         function redrawCaption($elem, obj){
-            var txt = "【ID】" + obj.getId() + " " + obj.getName() + " 【日数】 " + obj.getDays()
+            var txt = "【ID】" + obj.getId() + " " + obj.getName()
                 + " 【開始】 " + formatDate(obj.getStartDate())
                 + " 【日数】 " + obj.getDays();
                 $elem.text(txt);
@@ -1154,7 +1154,8 @@ var ganttTask = function(options){
 
             $("#ganttMain").css("height", wkTop + 24 * DUMMY_COUNT -16);
 
-
+            $line = $("#ganttBaseDay");
+            $line.css("height", wkTop + 24 * DUMMY_COUNT -16)
 
 
         };
@@ -1495,7 +1496,35 @@ var ganttTask = function(options){
                     $("#ganttTasksPane").scrollTop($(this).scrollTop());
                 });
 
+                //canvas
+                /*
+                var $cav = $("<canvas />");
+                $cav.attr("id", "ganttCanvas");
+                $cav.css("position", "absolute");
+                $cav.css("left", "0px");
+                $cav.css("top", "0px");
+                $cav.css("width", String(GANTT_DAY_WIDTH * (sa +1)) + "px");
+                $cav.css("height", settings.lines * 24 + "px");
+                //$cav.attr("z-index", "100");
 
+                $div5.append($cav);
+
+
+                var ctx = $cav[0].getContext('2d');
+                ctx.beginPath();
+                ctx.fillRect(20, 20, 80, 40);
+                */
+
+                $line = $("<div />");
+                $line.attr("id", "ganttBaseDay");
+                $line.css("position", "absolute");
+                $line.css("width", "2px");
+                $line.css("left", (GANTT_DAY_WIDTH *7) + "px");
+                $line.css("top", "0px");
+                $line.css("height", settings.lines * 24 + "px");
+                $line.css("border","1px solid #fb5252");
+
+                $gmain.append($line);
             };
 
             init();
